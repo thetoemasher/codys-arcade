@@ -85,11 +85,15 @@ class Tetris extends Component {
     }
   }
 
-  prevToCur = (prev, map) => {
+  prevToCur = (prev, map, dir) => {
     let cur = []
     prev.forEach(r => {
+      let newCoord = []
       map[r[0]][r[1]] = 0
-      cur.push([r[0] + 1, r[1]])
+      if(dir === 'left') newCoord = [r[0], r[1] - 1]
+      if(dir === 'right') newCoord = [r[0], r[1] + 1]
+      if(dir === 'down') newCoord = [r[0] + 1, r[1]]
+      cur.push(newCoord)
     })
     return cur
   }
@@ -98,7 +102,7 @@ class Tetris extends Component {
     if(!this.state.end) {
       let map = this.state.map.slice()
       let previousCoords = this.state.currentCoords.slice()
-      let currentCoords = this.prevToCur(previousCoords, map)
+      let currentCoords = this.prevToCur(previousCoords, map, 'down')
       let end = false
       let next = false
       let lose = false
@@ -178,25 +182,19 @@ class Tetris extends Component {
       let previousCoords = this.state.currentCoords.slice()
       let currentCoords = []
       let end = false
-      previousCoords.forEach(r => {
-        let newCoord = []
-        map[r[0]][r[1]] = 0
-        if(dir === 'left') newCoord = [r[0], r[1] - 1]
-        if(dir === 'right') newCoord = [r[0], r[1] + 1]
-        currentCoords.push(newCoord)
-      })
+      currentCoords = this.prevToCur(previousCoords, map, dir)
+
       for(let i = 0; i < currentCoords.length; i++) {
         let r = currentCoords[i]
         if(map[r[0]] && map[r[0]][r[1]] === 0){
           map[r[0]][r[1]] = this.state.currentColor
-        } else if (r[0] === 20) {
-          end = true
         } else {
           currentCoords.splice(i, 1)
           i--
           end = true
         }
       }
+      console.log('blah', currentCoords)
       if(end) {
         currentCoords.forEach(r => {
           map[r[0]][r[1]] = 0
@@ -271,7 +269,7 @@ class Tetris extends Component {
       let end = false
       clearInterval(this.state.autoMove)
       while(!end) {
-        currentCoords = this.prevToCur(previousCoords, map)
+        currentCoords = this.prevToCur(previousCoords, map, 'down')
 
         for(let i = 0; i < currentCoords.length; i++) {
           let r = currentCoords[i]
