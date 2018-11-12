@@ -85,8 +85,9 @@ class Tetris extends Component {
     }
   }
 
-  prevToCur = (prev, map, dir) => {
+  prevToCur = (prev, map, dir, bottom) => {
     let cur = []
+    let end = false
     prev.forEach(r => {
       let newCoord = []
       map[r[0]][r[1]] = 0
@@ -95,28 +96,45 @@ class Tetris extends Component {
       if(dir === 'down') newCoord = [r[0] + 1, r[1]]
       cur.push(newCoord)
     })
-    return cur
+
+      for(let i = 0; i < cur.length; i++) {
+        let r = cur[i]
+        if(!bottom) {
+          if(map[r[0]] && map[r[0]][r[1]] === 0){
+            map[r[0]][r[1]] = this.state.currentColor
+          } else {
+            cur.splice(i, 1)
+            i--
+            end = true
+          }
+        } else {
+          if(!map[r[0]] || map[r[0]][r[1]] !== 0){
+            end = true
+            break
+          }
+        }
+      }
+    let stuff = {
+      end,
+      map,
+      cur
+    }
+    return stuff
   }
 
   movePiece = () => {
     if(!this.state.end) {
       let map = this.state.map.slice()
       let previousCoords = this.state.currentCoords.slice()
-      let currentCoords = this.prevToCur(previousCoords, map, 'down')
+      let currentCoords = []
       let end = false
       let next = false
       let lose = false
       
-      for(let i = 0; i < currentCoords.length; i++) {
-        let r = currentCoords[i]
-        if(map[r[0]] && map[r[0]][r[1]] === 0){
-          map[r[0]][r[1]] = this.state.currentColor
-        } else {
-          currentCoords.splice(i, 1)
-          i--
-          end = true
-        }
-      }
+      let a = this.prevToCur(previousCoords, map, 'down')
+      currentCoords = a.cur
+      end = a.end
+
       if(end) {
         currentCoords.forEach(r => {
           map[r[0]][r[1]] = 0
@@ -138,10 +156,6 @@ class Tetris extends Component {
         }
 
         next = true
-      } else {
-        currentCoords.forEach(r => {
-          map[r[0]][r[1]] = this.state.currentColor
-        })
       }
       this.setState({map, currentCoords})
       if(next) {
@@ -182,19 +196,10 @@ class Tetris extends Component {
       let previousCoords = this.state.currentCoords.slice()
       let currentCoords = []
       let end = false
-      currentCoords = this.prevToCur(previousCoords, map, dir)
-
-      for(let i = 0; i < currentCoords.length; i++) {
-        let r = currentCoords[i]
-        if(map[r[0]] && map[r[0]][r[1]] === 0){
-          map[r[0]][r[1]] = this.state.currentColor
-        } else {
-          currentCoords.splice(i, 1)
-          i--
-          end = true
-        }
-      }
-      console.log('blah', currentCoords)
+      let a = this.prevToCur(previousCoords, map, dir)
+      currentCoords = a.cur
+      end = a.end
+      
       if(end) {
         currentCoords.forEach(r => {
           map[r[0]][r[1]] = 0
@@ -269,15 +274,10 @@ class Tetris extends Component {
       let end = false
       clearInterval(this.state.autoMove)
       while(!end) {
-        currentCoords = this.prevToCur(previousCoords, map, 'down')
+        let a = this.prevToCur(previousCoords, map, 'down', 'yes')
+        currentCoords = a.cur
+        end = a.end
 
-        for(let i = 0; i < currentCoords.length; i++) {
-          let r = currentCoords[i]
-          if(!map[r[0]] || map[r[0]][r[1]] !== 0){
-            end = true
-            break
-          }
-        }
         if(!end) {
           previousCoords = currentCoords.slice()
           currentCoords = []
@@ -288,7 +288,7 @@ class Tetris extends Component {
           map[r[0]][r[1]] = this.state.currentColor
         })
       }
-      this.setState({previousCoords, map})
+      this.setState({currentCoords: previousCoords, map})
       this.checkRows().then(() => {
         this.getNextPiece()
       })
